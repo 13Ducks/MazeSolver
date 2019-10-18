@@ -74,7 +74,6 @@ public class MazeSolver {
         if (!(teleporters.size() == 0 || teleporters.size() == 2)) throw new IllegalArgumentException("Valid mazes only have 0 or 2 teleporters!");
 
         solveMaze(maze, start, end, width, height, teleporters);
-
         // Stop memory leak by closing scanners
         sc.close();
     }
@@ -128,7 +127,11 @@ public class MazeSolver {
         boolean pathFound = false;
 
         // Chooses mode that will be used in calls to chooseHeuristic()
-        char hMode = 'e';
+        Scanner scsolve = new Scanner(System.in);
+        System.out.println("Choose a heuristic mode");
+        System.out.println("'e': Euclidean, 'm': Manhattan, 'p': Proximity sensor, anything else: 0");
+        char hMode = scsolve.nextLine().charAt(0);
+        scsolve.close();
 
         /*
         If a heuristic mode is selected, this may not try all values leading to potentially not finding the shortest path
@@ -175,7 +178,7 @@ public class MazeSolver {
                 if (next.isOpen() && seen.add(next)) {
                     next.setAdj(curr);
                     next.setDistance(curr.getDistance()+1);
-                    next.setHeuristic(chooseHeuristic(next, end, hMode)+next.getDistance());
+                    next.setHeuristic(chooseHeuristic(next, end, hMode) + next.getDistance());
                     queue.add(next);
                 }
             }
@@ -191,7 +194,7 @@ public class MazeSolver {
                 if (next.isOpen() && seen.add(next)) {
                     next.setAdj(curr);
                     next.setDistance(curr.getDistance()+1);
-                    next.setHeuristic(chooseHeuristic(next, end, hMode)+next.getDistance());
+                    next.setHeuristic(chooseHeuristic(next, end, hMode) + next.getDistance());
                     queue.add(next);
                 }
             }
@@ -207,7 +210,7 @@ public class MazeSolver {
                 if (next.isOpen() && seen.add(next)) {
                     next.setAdj(curr);
                     next.setDistance(curr.getDistance()+1);
-                    next.setHeuristic(chooseHeuristic(next, end, hMode)+next.getDistance());
+                    next.setHeuristic(chooseHeuristic(next, end, hMode) + next.getDistance());
                     queue.add(next);
                 }
             }
@@ -223,7 +226,7 @@ public class MazeSolver {
                 if (next.isOpen() && seen.add(next)) {
                     next.setAdj(curr);
                     next.setDistance(curr.getDistance()+1);
-                    next.setHeuristic(chooseHeuristic(next, end, hMode)+next.getDistance());
+                    next.setHeuristic(chooseHeuristic(next, end, hMode) + next.getDistance());
                     queue.add(next);
                 }
             }
