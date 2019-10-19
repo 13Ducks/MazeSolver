@@ -2,88 +2,29 @@ package mazesolver;
 
 import java.util.*;
 
-public class MazeSolver {
-    public static void main(String[] args) {
-        Scanner sc = new Scanner(System.in);
+public class Maze {
+    private Square[][] maze;
+    private Square start, end;
+    private int width, height;
+    private ArrayList<Square> teleporters;
 
-        System.out.println("Enter width:");
-        int width = sc.nextInt();
-        System.out.println("Enter height:");
-        int height = sc.nextInt();
-        System.out.println(width + " " + height);
+    public Maze (Square[][] maze, Square start, Square end, int width, int height, ArrayList<Square> teleporters) {
+        this.maze = maze;
+        this.start = start;
+        this.end = end;
+        this.width = width;
+        this.height = height;
+        this.teleporters = teleporters;
+    }
 
-        // Maze will be stored in 2D array of Squares, each representing one tile
-        // [height][width] so is more intuitive: increases first horizontally
-        Square[][] maze = new Square[height][width];
-
-        // Track start and end now so we do not have to loop through whole thing to find them later
-        Square start = null, end = null;
-
-        // Store teleporter locations if the maze has them
-        ArrayList<Square> teleporters = new ArrayList<>();
-
-        System.out.println("Now enter your maze:");
-        int count = 0;
-        // While loop instead of for loop so incorrect inputs can be entered without increasing the counter
-        while (count < height) {
-            String input = sc.next();
-            if (validInput(input, width)) {
-                // Need to make into char array so we can process each one individually and make into different squares
-                char[] inputArr = input.toCharArray();
-                for (int i = 0; i < width; i++) {
-                    // Create new Square object for every tile with correct x,y positions
-                    // x=0, y=0 is top left corner
-                    Square tile = new Square(inputArr[i], i, count);
-
-                    // Make sure maze only has one start and one end
-                    if (tile.isStart()) {
-                        if (start == null) {
-                            start = tile;
-                        } else {
-                            throw new IllegalArgumentException("Valid mazes can only have one start!");
-                        }
-                    }
-
-                    if (tile.isEnd()) {
-                        if (end == null) {
-                            end = tile;
-                        } else {
-                            throw new IllegalArgumentException("Valid mazes can only have one end!");
-                        }
-                    }
-
-                    if (tile.isTeleport()) {
-                        teleporters.add(tile);
-                    }
-
-                    maze[count][i] = tile;
-                }
-                count++;
-            } else {
-                // Don't error if invalid line input given so allows so copypasting file contents which may have had other text or comments
-                System.out.println("Valid mazes can must have " + width + " characters per line and only consist of # (Wall), . (Open), o (Start), * (End), @ (Teleporter)");
-            }
-        }
-        
-        System.out.println("You entered the following maze:");
-        displayMaze(maze);
-
+    public void validMaze () {
         // Make sure maze has both a start and end
         if (start == null || end == null) throw new IllegalArgumentException("Valid mazes must have a start and an end!");
         // There can only be 0 or 2 teleporters
         if (!(teleporters.size() == 0 || teleporters.size() == 2)) throw new IllegalArgumentException("Valid mazes only have 0 or 2 teleporters!");
-
-        solveMaze(maze, start, end, width, height, teleporters);
-        // Stop memory leak by closing scanners
-        sc.close();
     }
 
-    public static boolean validInput (String s, int width) {
-        // Regex is checking if all characters are part of set [#.ox@]
-        return s.length() == width && s.matches("^[#.o*@]+$");
-    }
-
-    public static void displayMaze (Square[][] maze) {
+    public void displayMaze () {
         for (Square[] row : maze) {
             for (Square item : row) {
                 // toString defined for Square in Square class so no explicit calls needed
@@ -93,7 +34,7 @@ public class MazeSolver {
         }
     }
 
-    public static int chooseHeuristic(Square next, Square end, char mode) {
+    private int chooseHeuristic(Square next, char mode) {
         /*
         mode = 'e': Euclidean distance from current tile to end
         mode = 'm': Manhattan distance from current tile to end
@@ -113,7 +54,7 @@ public class MazeSolver {
         }
     }
 
-    public static void solveMaze (Square[][] maze, Square start, Square end, int width, int height, ArrayList<Square> teleporters) {
+    public void solveMaze () {
         // PriorityQueue allows use of heuristics to guess which tiles will lead to the end, and therefore should be explored earlier
 
         PriorityQueue<Square> queue = new PriorityQueue<>();
@@ -178,11 +119,11 @@ public class MazeSolver {
                 if (next.isOpen() && seen.add(next)) {
                     next.setAdj(curr);
                     next.setDistance(curr.getDistance()+1);
-                    next.setHeuristic(chooseHeuristic(next, end, hMode) + next.getDistance());
+                    next.setHeuristic(chooseHeuristic(next, hMode) + next.getDistance());
                     queue.add(next);
                 }
             }
-            
+
             // UP
             if (currY > 0) {
                 Square next = maze[currY-1][currX];
@@ -194,7 +135,7 @@ public class MazeSolver {
                 if (next.isOpen() && seen.add(next)) {
                     next.setAdj(curr);
                     next.setDistance(curr.getDistance()+1);
-                    next.setHeuristic(chooseHeuristic(next, end, hMode) + next.getDistance());
+                    next.setHeuristic(chooseHeuristic(next, hMode) + next.getDistance());
                     queue.add(next);
                 }
             }
@@ -210,7 +151,7 @@ public class MazeSolver {
                 if (next.isOpen() && seen.add(next)) {
                     next.setAdj(curr);
                     next.setDistance(curr.getDistance()+1);
-                    next.setHeuristic(chooseHeuristic(next, end, hMode) + next.getDistance());
+                    next.setHeuristic(chooseHeuristic(next, hMode) + next.getDistance());
                     queue.add(next);
                 }
             }
@@ -226,11 +167,11 @@ public class MazeSolver {
                 if (next.isOpen() && seen.add(next)) {
                     next.setAdj(curr);
                     next.setDistance(curr.getDistance()+1);
-                    next.setHeuristic(chooseHeuristic(next, end, hMode) + next.getDistance());
+                    next.setHeuristic(chooseHeuristic(next, hMode) + next.getDistance());
                     queue.add(next);
                 }
             }
-            
+
             // TELEPORTER
             // Make sure that the teleporter list has a size of 2, meaning no teleporter has been seen
             if (curr.isTeleport() && teleporters.size() > 1) {
@@ -240,14 +181,14 @@ public class MazeSolver {
                 Square next = teleporters.get(0);
                 if (seen.add(next)) {
                     next.setAdj(curr);
-                    next.setHeuristic(chooseHeuristic(next, end, hMode));
+                    next.setHeuristic(chooseHeuristic(next, hMode));
                     queue.add(next);
                 }
             }
         }
 
         if (pathFound) {
-            ArrayList<Square> path = findPath(end);
+            ArrayList<Square> path = findPath();
             // path includes the start so subtract 1 to not include that
             System.out.println("The solution was " + (path.size()-1) + " tiles long! (includes end)");
             // Nice way of printing path out, anything on the path is marked as "p" and anything else that is not the start, end or teleporter is "_"
@@ -274,7 +215,7 @@ public class MazeSolver {
         System.out.println("There were " + count + " tiles searched");
     }
 
-    public static ArrayList<Square> findPath(Square end) {
+    private ArrayList<Square> findPath() {
         // Backtracking from end: keep getting squares that led to current one until reach start
         ArrayList<Square> path = new ArrayList<>();
         path.add(end);
