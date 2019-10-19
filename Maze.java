@@ -1,5 +1,3 @@
-package mazesolver;
-
 import java.util.*;
 
 public class Maze {

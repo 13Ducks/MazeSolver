@@ -1,5 +1,3 @@
-package mazesolver;
-
 /**
  Chose to make Square a class rather than an enum to be able to track various important variables
  Being able to track adj is very important for backtracking from end to start to find path
