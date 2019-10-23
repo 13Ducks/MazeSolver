@@ -41,7 +41,6 @@ public class Main {
                             throw new IllegalArgumentException("Valid mazes can only have one start!");
                         }
                     }
-
                     if (tile.isEnd()) {
                         if (end == null) {
                             end = tile;

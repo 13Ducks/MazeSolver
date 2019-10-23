@@ -23,7 +23,6 @@ public class Maze {
     }
 
     private int chooseHeuristic(Square next, char mode, int count) {
-
         /*
         mode = 'e': Euclidean distance from current tile to end
         mode = 'm': Manhattan distance from current tile to end
