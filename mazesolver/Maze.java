@@ -4,7 +4,7 @@ public class Maze {
     private Square[][] maze;
     private Square start, end;
     private int width, height;
-    private ArrayList<Square> teleporters;
+    private ArrayList<Square> teleporters, seenOrder;
 
     public Maze (Square[][] maze, Square start, Square end, int width, int height, ArrayList<Square> teleporters) {
         this.maze = maze;
@@ -22,17 +22,8 @@ public class Maze {
         if (!(teleporters.size() == 0 || teleporters.size() == 2)) throw new IllegalArgumentException("Valid mazes only have 0 or 2 teleporters!");
     }
 
-    public void displayMaze () {
-        for (Square[] row : maze) {
-            for (Square item : row) {
-                // toString defined for Square in Square class so no explicit calls needed
-                System.out.print(item);
-            }
-            System.out.println();
-        }
-    }
+    private int chooseHeuristic(Square next, char mode, int count) {
 
-    private int chooseHeuristic(Square next, char mode) {
         /*
         mode = 'e': Euclidean distance from current tile to end
         mode = 'm': Manhattan distance from current tile to end
@@ -48,29 +39,25 @@ public class Maze {
         } else if (mode == 'p') {
             return Math.min(diffX + diffY, 8);
         } else {
-            return 0;
+            return count;
         }
     }
 
-    public void solveMaze () {
+    public void solveMaze (char hMode, boolean addDistance) {
         // PriorityQueue allows use of heuristics to guess which tiles will lead to the end, and therefore should be explored earlier
-
         PriorityQueue<Square> queue = new PriorityQueue<>();
         queue.add(start);
         start.setDistance(0);
 
         // HashSet since inserting into it is O(1) rather than ArrayList.contains() being O(n)
         HashSet<Square> seen = new HashSet<>();
+
+        // Tracking this so we can fake animation on the GUI by drawing one square every x seconds
+        ArrayList<Square> seenOrder = new ArrayList<>();
         seen.add(start);
 
         boolean pathFound = false;
 
-        // Chooses mode that will be used in calls to chooseHeuristic()
-        Scanner scsolve = new Scanner(System.in);
-        System.out.println("Choose a heuristic mode");
-        System.out.println("'e': Euclidean, 'm': Manhattan, 'p': Proximity sensor, anything else: 0");
-        char hMode = scsolve.nextLine().charAt(0);
-        scsolve.close();
 
         /*
         If a heuristic mode is selected, this may not try all values leading to potentially not finding the shortest path
@@ -87,12 +74,14 @@ public class Maze {
 
         int count = 0;
         // If queue is empty and path is not found, that means there is no possible path to end
-
         while (!queue.isEmpty()) {
             // Get first element of queue and remove it
             Square curr = queue.poll();
             int currX = curr.getX();
             int currY = curr.getY();
+
+            // ArrayList preserves order so this will show the searched squares in the correct order
+            seenOrder.add(curr);
 
             // Count has no functional use except to see if the heuristics are working better than having none
             count++;
@@ -100,15 +89,14 @@ public class Maze {
             /*
             Checks to make sure that will not cause ArrayIndexOutOfBounds exception, then get cells on one side of current one
             Make sure never have seen cell before to stop infinite loops and then add to queue and add to set of seen squares
-            Set each squares adj to be which square led to it
+            Set each squares adj to be which square led to it and the distance to adj square plus 1
             A* Algorithm: Set the squares heuristic value to be the distance from start plus the estimated distance to end
             */
-
-            //TODO: Add tie breaker for heuristics
 
             // LEFT
             if (currX > 0) {
                 Square next = maze[currY][currX-1];
+                // Stop searching maze once a path has been found
                 if (next.isEnd()) {
                     next.setAdj(curr);
                     pathFound = true;
@@ -117,10 +105,17 @@ public class Maze {
                 if (next.isOpen() && seen.add(next)) {
                     next.setAdj(curr);
                     next.setDistance(curr.getDistance()+1);
-                    next.setHeuristic(chooseHeuristic(next, hMode) + next.getDistance());
+                    /*
+                     If the option to use distance to start is selected on GUI,
+                     A* algorithm is f(x) = g(x) + h(x) where g(x) is distance to start, h(x) is estimated distance to end
+                     I find it works much better most of the time without adding h(x) so I added an option for that
+                     */
+                    next.setHeuristic(addDistance ? chooseHeuristic(next, hMode, count) + next.getDistance() : chooseHeuristic(next, hMode, count));
                     queue.add(next);
                 }
             }
+
+            // Repeat for 3 other directions
 
             // UP
             if (currY > 0) {
@@ -133,7 +128,7 @@ public class Maze {
                 if (next.isOpen() && seen.add(next)) {
                     next.setAdj(curr);
                     next.setDistance(curr.getDistance()+1);
-                    next.setHeuristic(chooseHeuristic(next, hMode) + next.getDistance());
+                    next.setHeuristic(addDistance ? chooseHeuristic(next, hMode, count) + next.getDistance() : chooseHeuristic(next, hMode, count));
                     queue.add(next);
                 }
             }
@@ -149,7 +144,7 @@ public class Maze {
                 if (next.isOpen() && seen.add(next)) {
                     next.setAdj(curr);
                     next.setDistance(curr.getDistance()+1);
-                    next.setHeuristic(chooseHeuristic(next, hMode) + next.getDistance());
+                    next.setHeuristic(addDistance ? chooseHeuristic(next, hMode, count) + next.getDistance() : chooseHeuristic(next, hMode, count));
                     queue.add(next);
                 }
             }
@@ -165,7 +160,7 @@ public class Maze {
                 if (next.isOpen() && seen.add(next)) {
                     next.setAdj(curr);
                     next.setDistance(curr.getDistance()+1);
-                    next.setHeuristic(chooseHeuristic(next, hMode) + next.getDistance());
+                    next.setHeuristic(addDistance ? chooseHeuristic(next, hMode, count) + next.getDistance() : chooseHeuristic(next, hMode, count));
                     queue.add(next);
                 }
             }
@@ -179,7 +174,7 @@ public class Maze {
                 Square next = teleporters.get(0);
                 if (seen.add(next)) {
                     next.setAdj(curr);
-                    next.setHeuristic(chooseHeuristic(next, hMode));
+                    next.setHeuristic(addDistance ? chooseHeuristic(next, hMode, count) + next.getDistance() : chooseHeuristic(next, hMode, count));
                     queue.add(next);
                 }
             }
@@ -211,6 +206,12 @@ public class Maze {
         }
 
         System.out.println("There were " + count + " tiles searched");
+
+        this.seenOrder = seenOrder;
+    }
+
+    public ArrayList<Square> getSeenOrder() {
+        return seenOrder;
     }
 
     private ArrayList<Square> findPath() {
@@ -225,5 +226,9 @@ public class Maze {
         }
 
         return path;
+    }
+
+    public Square[][] getMaze () {
+        return this.maze;
     }
 }

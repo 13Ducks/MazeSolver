@@ -65,15 +65,12 @@ public class Main {
 
         // Create the maze object with all information needed to find solution
         Maze maze = new Maze(mazeArr, start, end, width, height, teleporters);
-
-        System.out.println("You entered the following maze:");
-        maze.displayMaze();
-
-        // Validate maze and throw error if not valid
         maze.validMaze();
-        // Stop memory leak by closing scanners
 
-        maze.solveMaze();
+        // Create GUI with the maze, allows it to start the maze solve and draw it
+        new GUI(width, height, maze);
+
+        // Stop memory leak by closing scanners
         sc.close();
     }
 
